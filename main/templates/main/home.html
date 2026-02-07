@@ -3,200 +3,436 @@
 <head>
     <title>Учёт имущества</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .user-info { color: #666; }
-        .logout { color: #f00; text-decoration: none; }
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
 
-        .section { margin-bottom: 40px; }
-        .section-title { border-bottom: 2px solid #4CAF50; padding-bottom: 5px; margin-bottom: 15px; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
 
-        .operation-form { background: #f5f5f5; padding: 20px; border-radius: 5px; margin-bottom: 30px; }
-        .form-row { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; }
-        .form-group { flex: 1; min-width: 200px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select, textarea { width: 100%; padding: 8px; box-sizing: border-box; }
-        button { background: #4CAF50; color: white; padding: 10px 20px; border: none; cursor: pointer; font-size: 16px; }
+        .user-info {
+            color: #666;
+        }
 
-        .messages { margin-bottom: 20px; }
-        .success { background: #d4edda; color: #155724; padding: 10px; border-radius: 3px; }
-        .error { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 3px; }
+        .logout {
+            color: #f00;
+            text-decoration: none;
+            cursor: pointer;
+        }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background: #f2f2f2; }
-        tr:nth-child(even) { background: #f9f9f9; }
+        .section {
+            margin-bottom: 40px;
+        }
 
-        .small { font-size: 12px; color: #666; }
+        .section-title {
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+
+        .operation-form {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .messages {
+            margin-bottom: 20px;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 3px;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 3px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background: #f2f2f2;
+        }
+
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+
+        .small {
+            font-size: 12px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Учёт имущества</h1>
-        <div class="user-info">
-            Вы вошли как: <strong>{{ user.username }}</strong>
-            {% if user.first_name or user.last_name %}
-                ({{ user.first_name }} {{ user.last_name }})
-            {% endif %}
-            | <a href="/logout/" class="logout">Выйти</a>
+<div class="header">
+    <h1>Учёт имущества</h1>
+    <div class="user-info">
+        Вы вошли как: <strong>{{ user.username }}</strong>
+        {% if user.first_name or user.last_name %}
+        ({{ user.first_name }} {{ user.last_name }})
+        {% endif %}
+        | <a class="logout">Выйти</a>
+    </div>
+</div>
+
+<!-- Сообщения об успехе/ошибке -->
+{% if messages %}
+<div class="messages">
+    {% for message in messages %}
+    <div class="{% if message.tags %}{{ message.tags }}{% endif %}">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Форма создания операции -->
+<div class="section">
+    <h2 class="section-title">Создать операцию</h2>
+    <form method="post" class="operation-form" id="operation-form">
+        {% csrf_token %}
+
+        <!-- Тип операции -->
+        <div class="form-row">
+            <div class="form-group">
+                <label>Тип операции *</label>
+                <select name="operation_type" id="operation_type" required>
+                    <option value="">-- Выберите --</option>
+                    {% for value, label in operation_types %}
+                    <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
         </div>
-    </div>
 
-    <!-- Сообщения об успехе/ошибке -->
-    {% if messages %}
-    <div class="messages">
-        {% for message in messages %}
-            <div class="{% if message.tags %}{{ message.tags }}{% endif %}">
-                {{ message }}
+        <!-- Основные поля -->
+        <div class="form-row">
+            <div class="form-group">
+                <label>Наименование *</label>
+                <input type="text" name="item_name" required>
             </div>
+
+            <div class="form-group">
+                <label>Серийный номер</label>
+                <input type="text" name="serial">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Количество *</label>
+                <input type="number" name="quantity" step="0.01" value="1" required>
+            </div>
+
+            <div class="form-group">
+                <label>Единица измерения *</label>
+                <input type="text" name="unit" value="шт" required>
+            </div>
+        </div>
+
+        <!-- Склады: Откуда и Куда -->
+        <div class="form-row">
+            <div class="form-group" id="from_site_group">
+                <label>Откуда (склад) * <span id="from_site_required"
+                                              style="color: red; display: none;">*</span></label>
+                <select name="from_site" id="from_site">
+                    <option value="">-- Выберите склад --</option>
+                    {% for site in sites %}
+                    <option value="{{ site.id }}">{{ site.name }}</option>
+                    {% endfor %}
+                </select>
+                <small class="small" id="from_site_hint"></small>
+            </div>
+
+            <div class="form-group" id="to_site_group">
+                <label>Куда (склад) * <span id="to_site_required" style="color: red; display: none;">*</span></label>
+                <select name="to_site" id="to_site">
+                    <option value="">-- Выберите склад --</option>
+                    {% for site in sites %}
+                    <option value="{{ site.id }}">{{ site.name }}</option>
+                    {% endfor %}
+                </select>
+                <small class="small" id="to_site_hint"></small>
+            </div>
+        </div>
+
+        <!-- Комментарий -->
+        <div class="form-row">
+            <div class="form-group" style="flex: 2;">
+                <label>Комментарий</label>
+                <textarea name="comment" rows="2"></textarea>
+            </div>
+        </div>
+
+        <button type="submit">Создать операцию</button>
+        <p class="small">* — обязательные поля</p>
+    </form>
+</div>
+
+<!-- Операции за сегодня -->
+<div class="section">
+    <h2 class="section-title">Операции за сегодня</h2>
+    {% if today_operations %}
+    <table>
+        <thead>
+        <tr>
+            <th>Время</th>
+            <th>Тип</th>
+            <th>Наименование</th>
+            <th>Откуда</th>
+            <th>Куда</th>
+            <th>Кол-во</th>
+            <th>Создал</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for op in today_operations %}
+        <tr>
+            <td>{{ op.created_at|date:"H:i" }}</td>
+            <td>{{ op.get_operation_type_display }}</td>
+            <td>{{ op.item_name }}{% if op.serial %} ({{ op.serial }}){% endif %}</td>
+            <td>{% if op.from_site %}{{ op.from_site.name }}{% endif %}</td>
+            <td>{% if op.to_site %}{{ op.to_site.name }}{% endif %}</td>
+            <td>{{ op.quantity }} {{ op.unit }}</td>
+            <td>
+                {% if op.created_by.profile and op.created_by.profile.full_name %}
+                {{ op.created_by.profile.full_name }}
+                {% elif op.created_by.first_name or op.created_by.last_name %}
+                {{ op.created_by.first_name }} {{ op.created_by.last_name }}
+                {% else %}
+                {{ op.created_by.username }}
+                {% endif %}
+            </td>
+        </tr>
         {% endfor %}
-    </div>
+        </tbody>
+    </table>
+    {% else %}
+    <p>Сегодня ещё не было операций</p>
     {% endif %}
+</div>
 
-    <!-- Форма создания операции -->
-    <div class="section">
-        <h2 class="section-title">Создать операцию</h2>
-        <form method="post" class="operation-form">
-            {% csrf_token %}
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Тип операции *</label>
-                    <select name="operation_type" required>
-                        <option value="">-- Выберите --</option>
-                        {% for value, label in operation_types %}
-                            <option value="{{ value }}">{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+<!-- Последние операции -->
+<div class="section">
+    <h2 class="section-title">Последние операции</h2>
+    {% if last_operations %}
+    <table>
+        <thead>
+        <tr>
+            <th>Дата</th>
+            <th>Тип</th>
+            <th>Наименование</th>
+            <th>Откуда</th>
+            <th>Куда</th>
+            <th>Кол-во</th>
+            <th>Создал</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for op in last_operations %}
+        <tr>
+            <td>{{ op.created_at|date:"d.m.Y H:i" }}</td>
+            <td>{{ op.get_operation_type_display }}</td>
+            <td>{{ op.item_name }}</td>
+            <td>{% if op.from_site %}{{ op.from_site.name }}{% endif %}</td>
+            <td>{% if op.to_site %}{{ op.to_site.name }}{% endif %}</td>
+            <td>{{ op.quantity }} {{ op.unit }}</td>
+            <td>
+                {% if op.created_by.profile and op.created_by.profile.full_name %}
+                {{ op.created_by.profile.full_name }}
+                {% elif op.created_by.first_name or op.created_by.last_name %}
+                {{ op.created_by.first_name }} {{ op.created_by.last_name }}
+                {% else %}
+                {{ op.created_by.username }}
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Операций пока нет</p>
+    {% endif %}
+</div>
 
-                <div class="form-group">
-                    <label>Объект (склад) *</label>
-                    <select name="site" required>
-                        <option value="">-- Выберите --</option>
-                        {% for site in sites %}
-                            <option value="{{ site.id }}">{{ site.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
+<!-- Скрытая форма для выхода -->
+<form id="logout-form" action="/logout/" method="post" style="display: none;">
+    {% csrf_token %}
+</form>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Наименование *</label>
-                    <input type="text" name="item_name" required>
-                </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // ========== ОПЕРАЦИИ ==========
+        const operationTypeSelect = document.getElementById('operation_type');
+        const fromSiteGroup = document.getElementById('from_site_group');
+        const toSiteGroup = document.getElementById('to_site_group');
+        const fromSiteSelect = document.getElementById('from_site');
+        const toSiteSelect = document.getElementById('to_site');
+        const fromSiteRequired = document.getElementById('from_site_required');
+        const toSiteRequired = document.getElementById('to_site_required');
+        const fromSiteHint = document.getElementById('from_site_hint');
+        const toSiteHint = document.getElementById('to_site_hint');
 
-                <div class="form-group">
-                    <label>Серийный номер</label>
-                    <input type="text" name="serial">
-                </div>
-            </div>
+        function updateFormFields() {
+            const type = operationTypeSelect.value;
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Количество *</label>
-                    <input type="number" name="quantity" step="0.01" value="1" required>
-                </div>
+            // Сбрасываем всё
+            fromSiteSelect.required = false;
+            toSiteSelect.required = false;
+            fromSiteRequired.style.display = 'none';
+            toSiteRequired.style.display = 'none';
+            fromSiteHint.textContent = '';
+            toSiteHint.textContent = '';
 
-                <div class="form-group">
-                    <label>Единица измерения *</label>
-                    <input type="text" name="unit" value="шт" required>
-                </div>
-            </div>
+            // Скрываем/показываем в зависимости от типа операции
+            if (type === 'incoming') {
+                // ПРИХОД: только "Куда" обязательно
+                fromSiteGroup.style.display = 'none';
+                toSiteGroup.style.display = 'block';
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Откуда (для перемещения/списания)</label>
-                    <input type="text" name="from_location" placeholder="Например: Стеллаж А1">
-                </div>
+                toSiteSelect.required = true;
+                toSiteRequired.style.display = 'inline';
+                toSiteHint.textContent = 'Укажите склад, куда поступает имущество';
 
-                <div class="form-group">
-                    <label>Куда (для прихода/перемещения)</label>
-                    <input type="text" name="to_location" placeholder="Например: Стеллаж Б2">
-                </div>
-            </div>
+                // Очищаем скрытое поле
+                fromSiteSelect.value = '';
 
-            <div class="form-row">
-                <div class="form-group" style="flex: 2;">
-                    <label>Комментарий</label>
-                    <textarea name="comment" rows="2"></textarea>
-                </div>
-            </div>
+            } else if (type === 'move') {
+                // ПЕРЕМЕЩЕНИЕ: оба склада обязательны
+                fromSiteGroup.style.display = 'block';
+                toSiteGroup.style.display = 'block';
 
-            <button type="submit">Создать операцию</button>
-            <p class="small">* — обязательные поля</p>
-        </form>
-    </div>
+                fromSiteSelect.required = true;
+                toSiteSelect.required = true;
+                fromSiteRequired.style.display = 'inline';
+                toSiteRequired.style.display = 'inline';
+                fromSiteHint.textContent = 'Укажите склад, откуда перемещается имущество';
+                toSiteHint.textContent = 'Укажите склад, куда перемещается имущество';
 
-    <!-- Операции за сегодня -->
-    <div class="section">
-        <h2 class="section-title">Операции за сегодня</h2>
-        {% if today_operations %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>Время</th>
-                        <th>Тип</th>
-                        <th>Наименование</th>
-                        <th>Объект</th>
-                        <th>Кол-во</th>
-                        <th>Откуда/Куда</th>
-                        <th>Создал</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for op in today_operations %}
-                    <tr>
-                        <td>{{ op.created_at|date:"H:i" }}</td>
-                        <td>{{ op.get_operation_type_display }}</td>
-                        <td>{{ op.item_name }}{% if op.serial %} ({{ op.serial }}){% endif %}</td>
-                        <td>{{ op.site.name }}</td>
-                        <td>{{ op.quantity }} {{ op.unit }}</td>
-                        <td>
-                            {% if op.from_location %}Из: {{ op.from_location }}{% endif %}
-                            {% if op.to_location %} → {{ op.to_location }}{% endif %}
-                        </td>
-                        <td>{{ op.created_by.username }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <p>Сегодня ещё не было операций</p>
-        {% endif %}
-    </div>
+            } else if (type === 'writeoff') {
+                // СПИСАНИЕ: только "Откуда" обязательно
+                fromSiteGroup.style.display = 'block';
+                toSiteGroup.style.display = 'none';
 
-    <!-- Последние операции -->
-    <div class="section">
-        <h2 class="section-title">Последние операции</h2>
-        {% if last_operations %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>Дата</th>
-                        <th>Тип</th>
-                        <th>Наименование</th>
-                        <th>Объект</th>
-                        <th>Кол-во</th>
-                        <th>Создал</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for op in last_operations %}
-                    <tr>
-                        <td>{{ op.created_at|date:"d.m.Y H:i" }}</td>
-                        <td>{{ op.get_operation_type_display }}</td>
-                        <td>{{ op.item_name }}</td>
-                        <td>{{ op.site.name }}</td>
-                        <td>{{ op.quantity }} {{ op.unit }}</td>
-                        <td>{{ op.created_by.username }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <p>Операций пока нет</p>
-        {% endif %}
-    </div>
+                fromSiteSelect.required = true;
+                fromSiteRequired.style.display = 'inline';
+                fromSiteHint.textContent = 'Укажите склад, откуда списывается имущество';
+
+                // Очищаем скрытое поле
+                toSiteSelect.value = '';
+
+            } else {
+                // Ничего не выбрано - показываем оба, но не обязательные
+                fromSiteGroup.style.display = 'block';
+                toSiteGroup.style.display = 'block';
+            }
+        }
+
+        // Обработчик изменения типа операции
+        operationTypeSelect.addEventListener('change', updateFormFields);
+
+        // Инициализация при загрузке
+        updateFormFields();
+
+        // Валидация формы перед отправкой
+        document.getElementById('operation-form').addEventListener('submit', function (e) {
+            const type = operationTypeSelect.value;
+            let isValid = true;
+
+            if (type === 'incoming') {
+                if (!toSiteSelect.value) {
+                    alert('Для прихода укажите склад "Куда"');
+                    isValid = false;
+                }
+            } else if (type === 'move') {
+                if (!fromSiteSelect.value || !toSiteSelect.value) {
+                    alert('Для перемещения укажите оба склада: "Откуда" и "Куда"');
+                    isValid = false;
+                } else if (fromSiteSelect.value === toSiteSelect.value) {
+                    alert('Для перемещения склады "Откуда" и "Куда" должны быть разными');
+                    isValid = false;
+                }
+            } else if (type === 'writeoff') {
+                if (!fromSiteSelect.value) {
+                    alert('Для списания укажите склад "Откуда"');
+                    isValid = false;
+                }
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+            }
+        });
+
+        // ========== ВЫХОД ==========
+        const logoutLink = document.querySelector('a.logout');
+        if (logoutLink) {
+            logoutLink.addEventListener('click', function (e) {
+                e.preventDefault();
+                if (confirm('Вы уверены, что хотите выйти из системы?')) {
+                    document.getElementById('logout-form').submit();
+                }
+            });
+        }
+    });
+</script>
 </body>
 </html>

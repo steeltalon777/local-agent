@@ -32,12 +32,28 @@ class SiteAdmin(admin.ModelAdmin):
 
 
 # Админка для Operation
+# Админка для Operation
 class OperationAdmin(admin.ModelAdmin):
-    list_display = ('created_at', 'operation_type', 'item_name', 'site', 'created_by', 'quantity', 'unit')
-    list_filter = ('operation_type', 'site', 'created_at', 'created_by')
+    list_display = ('created_at', 'operation_type', 'item_name', 'from_site', 'to_site', 'created_by', 'quantity', 'unit')
+    list_filter = ('operation_type', 'created_at', 'created_by', 'from_site', 'to_site')  # Убрали 'site', добавили 'from_site', 'to_site'
     search_fields = ('item_name', 'serial', 'comment')
     readonly_fields = ('created_at',)
-
+    # Добавим поля для удобного отображения
+    fieldsets = (
+        ('Основная информация', {
+            'fields': ('operation_type', 'created_at', 'created_by')
+        }),
+        ('Детали операции', {
+            'fields': ('item_name', 'serial', 'quantity', 'unit', 'comment')
+        }),
+        ('Склады', {
+            'fields': ('from_site', 'to_site')
+        }),
+        ('Локации (устаревшие)', {
+            'fields': ('from_location', 'to_location'),
+            'classes': ('collapse',)  # Сворачиваемый блок
+        }),
+    )
 
 # Регистрируем модели
 admin.site.unregister(User)  # Отменяем стандартную регистрацию

@@ -21,6 +21,14 @@ class UserProfile(models.Model):
             self.full_name = f"{self.user.first_name or ''} {self.user.last_name or ''}".strip()
         super().save(*args, **kwargs)
 
+    def get_display_name(self):
+        """Возвращает ФИО если есть, иначе username"""
+        if self.full_name:
+            return self.full_name
+        elif self.user.first_name or self.user.last_name:
+            return f"{self.user.first_name or ''} {self.user.last_name or ''}".strip()
+        else:
+            return self.user.username
 
 # Объект (склад/участок) - оставляем как есть
 class Site(models.Model):
@@ -43,6 +51,7 @@ class OperationType(models.TextChoices):
 
 
 # Операция движения - меняем created_by на стандартного User
+# Операция движения
 class Operation(models.Model):
     created_at = models.DateTimeField('Дата и время создания', auto_now_add=True)
     operation_type = models.CharField(
@@ -50,14 +59,23 @@ class Operation(models.Model):
         max_length=20,
         choices=OperationType.choices
     )
-    site = models.ForeignKey(Site, on_delete=models.PROTECT, verbose_name='Объект')
-    created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name='Создал')  # Стандартный User
+    # УБИРАЕМ это поле: site = models.ForeignKey(Site, on_delete=models.PROTECT, verbose_name='Объект')
+    created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name='Создал')
     item_name = models.CharField('Наименование', max_length=255)
     serial = models.CharField('Серийный номер', max_length=255, blank=True, null=True)
     quantity = models.FloatField('Количество', default=1)
     unit = models.CharField('Единица измерения', max_length=50, default='шт')
-    from_location = models.CharField('Откуда', max_length=255, blank=True, null=True)
-    to_location = models.CharField('Куда', max_length=255, blank=True, null=True)
+
+    # ДОБАВЛЯЕМ эти два поля вместо from_location/to_location:
+    from_site = models.ForeignKey(Site, on_delete=models.PROTECT, verbose_name='Откуда (склад)',
+                                  related_name='operations_from', null=True, blank=True)
+    to_site = models.ForeignKey(Site, on_delete=models.PROTECT, verbose_name='Куда (склад)',
+                                related_name='operations_to', null=True, blank=True)
+
+    # Старые поля оставляем для совместимости, но делаем nullable:
+    from_location = models.CharField('Откуда (локация)', max_length=255, blank=True, null=True)
+    to_location = models.CharField('Куда (локация)', max_length=255, blank=True, null=True)
+
     comment = models.TextField('Комментарий', blank=True, null=True)
 
     class Meta:
